@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>My first three.js app</title>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta charset="utf-8" />
+    <title>Document</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+    </style>
   </head>
-  <style>
-    html,
-    body {
-      margin: 0;
-    }
-  </style>
   <body></body>
   <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
   <script type="importmap">
@@ -33,79 +33,68 @@
       height: window.innerHeight,
     }
 
-    // 初始化
+    function requirePath(path) {
+      return `images/${path}`
+    }
+    const skyList = [
+      requirePath('px.jpg'),
+      requirePath('nx.jpg'),
+      requirePath('py.jpg'),
+      requirePath('ny.jpg'),
+      requirePath('pz.jpg'),
+      requirePath('nz.jpg'),
+    ]
+
+    // 初始化场景、相机、渲染器
     let scene, camera, renderer
     function init() {
-      // 1、创建场景
+      // 创建场景
       scene = new THREE.Scene()
+      const cubeLoader = new THREE.CubeTextureLoader().load(skyList)
+      scene.background = cubeLoader
 
-      // 2、创建相机
-      camera = new THREE.PerspectiveCamera(30, size.width / size.height, 1, 5000)
+      // 创建相机
+      camera = new THREE.PerspectiveCamera(45, size.width / size.height, 1, 1000)
       // 相机位置
-      camera.position.set(10, 10, 10)
+      camera.position.set(-100, 100, 50)
 
-      // 3、导入glb模型
+      // 加载模型
+      const gltfLoader = new GLTFLoader()
       const dracoLoader = new DRACOLoader()
       dracoLoader.setDecoderPath('draco/')
-      const gltfLoader = new GLTFLoader()
       gltfLoader.setDRACOLoader(dracoLoader)
       gltfLoader.load(
-        './katong/cartoon_fire_truck.glb',
+        'building/building.glb',
         (gltf) => {
           scene.add(gltf.scene)
         },
         (xhr) => {
           console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
         },
-        (e) => {
-          console.error('啊出错了', e)
+        (error) => {
+          console.log(error)
         }
       )
 
-      // 4、添加灯光
-      const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 1)
-      hemiLight.color.setHSL(0.6, 1, 0.6)
-      hemiLight.groundColor.setHSL(0.095, 1, 0.75)
-      hemiLight.position.set(0, 50, 0)
-      scene.add(hemiLight)
+      //   // 初始化灯光
+      const ambientLight = new THREE.AmbientLight('#eee')
 
-      const hemiLightHelper = new THREE.HemisphereLightHelper(hemiLight, 1)
-      scene.add(hemiLightHelper)
+      // 平行光
+      // 光照强度为 2
+      const directionalLight = new THREE.DirectionalLight(new THREE.Color('rgb(255, 99, 71)'), 2)
+      directionalLight.position.set(-220, 30, 50)
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 5)
-      dirLight.color.setHSL(0.1, 1, 0.95)
-      dirLight.position.set(-1, 1.75, 1)
-      dirLight.position.multiplyScalar(30)
-      scene.add(dirLight)
-      dirLight.castShadow = true
-      dirLight.shadow.mapSize.width = 2048
-      dirLight.shadow.mapSize.height = 2048
+      scene.add(ambientLight, directionalLight)
 
-      const d = 50
-
-      dirLight.shadow.camera.left = -d
-      dirLight.shadow.camera.right = d
-      dirLight.shadow.camera.top = d
-      dirLight.shadow.camera.bottom = -d
-      dirLight.shadow.camera.far = 3500
-      dirLight.shadow.bias = -0.0001
-
-      const dirLightHelper = new THREE.DirectionalLightHelper(dirLight, 1)
-      scene.add(dirLightHelper)
-
-      // 5、创建渲染器
+      // 渲染器
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
       })
+
       renderer.setSize(size.width, size.height)
       document.body.appendChild(renderer.domElement)
-
-      // 6、添加控制器（鼠标滚动。放大缩小）
       const controls = new OrbitControls(camera, renderer.domElement)
-
-      const gui = new GUI()
-      gui.open()
 
       window.addEventListener('resize', onWindowResize)
     }
@@ -118,12 +107,11 @@
       renderer.setSize(size.width, size.height)
     }
 
-    // 7、执行函数
+    // 执行函数
     function animate() {
       requestAnimationFrame(animate)
       renderer.render(scene, camera)
     }
-
     init()
     animate()
   </script>
